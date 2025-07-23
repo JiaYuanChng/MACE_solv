@@ -1,0 +1,7 @@
+streamlit
+torch
+numpy
+rdkit-pypi
+ase
+mace-off
+matplotlib
