@@ -18,7 +18,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 @st.cache_resource
 def load_mace_calculator():
-    model_path = './mace-off/mace_off24/MACE-OFF24_medium.model'
+    model_path = './models/MACE-OFF24_medium.model'
     calculator = mace_off(model=model_path, device=device)
     return calculator
 
@@ -107,9 +107,9 @@ class SolubilityMLP(nn.Module):
         return self.layers(x)
 
 # Load ensemble model
-ensemble_states = torch.load('aq_ensemble_64_models.pth')
-feature_scalers = joblib.load('aq_ensemble_64_feature_scalers.joblib')
-target_scalers = joblib.load('aq_ensemble_64_target_scalers.joblib')
+ensemble_states = torch.load('./models/aq_ensemble_64_models.pth')
+feature_scalers = joblib.load('./models/aq_ensemble_64_feature_scalers.joblib')
+target_scalers = joblib.load('./models/aq_ensemble_64_target_scalers.joblib')
 
 def predict_with_ensemble(smiles: str):
     # Get embedding
