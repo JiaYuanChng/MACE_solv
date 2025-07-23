@@ -17,7 +17,7 @@ import streamlit as st
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
-@st.cache_resource
+# @st.cache_resource
 def load_mace_calculator():
     model_path = './models/MACE-OFF24_medium.model'
     calculator = mace_off(model=model_path, device=device)
