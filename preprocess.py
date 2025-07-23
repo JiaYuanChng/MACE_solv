@@ -19,7 +19,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 @st.cache_resource
 def load_mace_calculator():
     model_path = './mace-off/mace_off24/MACE-OFF24_medium.model'
-    calculator = mace_off(model=mace_model_path, device=device)
+    calculator = mace_off(model=model_path, device=device)
     return calculator
 
 # Load MACE calculator
