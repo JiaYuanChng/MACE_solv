@@ -1,110 +1,11 @@
-import streamlit as st
-import torch
-import torch.nn as nn
 import numpy as np
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from ase import Atoms
-from mace.tools import AtomicNumberTable
-from mace.tools.torch_geometric import DataLoader
-from mace.tools import torch_tools
-import matplotlib.pyplot as plt
+import streamlit as st
+from preprocess import *
 
-# Model 
-class SolubilityMLP(nn.Module):
-    def __init__(self, input_size):
-        super(SolubilityMLP, self).__init__()
-        self.layers = nn.Sequential(
-            nn.Linear(input_size, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1)
-        )
-
-    def forward(self, x):
-        return self.layers(x)
-
-# Functions to Load Models (with Caching) 
-
-@st.cache_resource
-def load_mace_calculator():
-    """embedding generation."""
-    model_path = 'models/MACE-OFF24_medium.model'
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    calculator = torch.load(model_path, map_location=device)
-    print("MACE calculator loaded successfully.")
-    return calculator
-
-@st.cache_resource
-def load_mlp_ensemble():
-    """ensemble model for prediction."""
-    path = 'models/ensemble_64_models_small.pth'
-    input_size = 256  
-    # Load to CPU
-    device = torch.device('cpu')
-    state_dicts = torch.load(path, map_location=device)
-    
-    models = []
-    for state_dict in state_dicts:
-        model = SolubilityMLP(input_size)
-        model.load_state_dict(state_dict)
-        model.eval()  # Set to evaluation mode
-        models.append(model)
-    print(f"MLP ensemble of {len(models)} models loaded successfully.")
-    return models
-
-# Molecule Processing 
-
-def rdkit_to_ase(mol: Chem.Mol) -> Atoms:
-    """Converts RDKit mol object to ASE Atoms object."""
-    positions = mol.GetConformer().GetPositions()
-    atomic_numbers = [atom.GetAtomicNum() for atom in mol.GetAtoms()]
-    return Atoms(numbers=atomic_numbers, positions=positions)
-
-def get_mace_embedding(smiles: str, calculator) -> np.ndarray:
-    """
-    Generates embedding for a given SMILES string.
-    Returns a single 256-dimensional feature vector.
-    """
-    # 1. Convert SMILES to RDKit Mol, add hydrogens
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        raise ValueError("Invalid SMILES string provided.")
-    mol = Chem.AddHs(mol)
-    AllChem.EmbedMolecule(mol, AllChem.ETKDG())
-
-    # 2. Convert to ASE Atoms
-    atoms = rdkit_to_ase(mol)
-
-    # 3. Get MACE features
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    data_loader = DataLoader([atoms], batch_size=1, shuffle=False)
-    for batch in data_loader:
-        batch = batch.to(device)
-        output = calculator(batch, compute_force=False)
-        node_feats = output.get("node_feats")
-
-    if node_feats is None:
-        raise RuntimeError("Failed to generate MACE node features.")
-
-    # 4. Average node features
-    graph_embedding = node_feats.mean(axis=0).detach().cpu().numpy()
-    return graph_embedding
-
-
-# Main Application 
-
-# Load models
-mace_calculator = load_mace_calculator()
-mlp_ensemble = load_mlp_ensemble()
-
-# Streamlit User Interface 
-st.title("Solubility Predictor")
+# --- Streamlit User Interface ---
+st.title("Solubility Prediction")
 st.markdown(
     "Enter a SMILES string to predict its **log solubility (in mols/litre)**. "
-    "The prediction is made by an ensemble of 64 MLP models, and the uncertainty "
-    "is the standard deviation of their predictions."
 )
 
 # User input
@@ -115,40 +16,27 @@ predict_button = st.button("Predict")
 if predict_button and smiles_input:
     with st.spinner("Calculating..."):
         try:
-            # 1. Get MACE embedding
-            mace_embedding = get_mace_embedding(smiles_input, mace_calculator)
+            # Get predictions from ensemble models
+            all_preds = predict_with_ensemble(smiles_input)
             
-            # 2. Prepare for MLP input
-            X_new = torch.tensor(mace_embedding).view(1, -1) # Shape: (1, 256)
-
-            # 3. Get predictions from the ensemble
-            with torch.no_grad():
-                all_preds = [model(X_new).numpy() for model in mlp_ensemble]
-                all_preds = np.stack(all_preds) # Shape: (64, 1, 1)
-            
-            # 4. Calculate mean and standard deviation
-            mean_pred = all_preds.mean()
-            std_pred = all_preds.std()
+            mean_pred = np.mean(all_preds)
+            std_pred = np.std(all_preds)
 
             # 5. Display numerical results
-            st.success(f"**Predicted Log Solubility:** `{mean_pred:.4f}`")
-            st.info(f"**Prediction Uncertainty (Std Dev):** `{std_pred:.4f}`")
+            st.success(f"**Predicted Log Solubility:** `{mean_pred:.2f}`")
+            st.info(f"**Prediction Uncertainty:** `{std_pred:.2f}`")
 
-            # 6. Create and display histogram of predictions
-            st.subheader("Distribution of Ensemble Predictions")
+            # Histogram of predictions
+            st.subheader("Distribution of Predictions")
             fig, ax = plt.subplots()
             
-            # Flatten the array for the histogram
-            predictions_flat = all_preds.flatten()
-            
-            ax.hist(predictions_flat, bins=15, edgecolor='black', alpha=0.7)
+            ax.hist(all_preds, bins=15, edgecolor='black', alpha=0.7)
             
             # Add a vertical line for the mean prediction
             ax.axvline(mean_pred, color='r', linestyle='--', linewidth=2, label=f'Mean: {mean_pred:.2f}')
             
             ax.set_xlabel("Predicted Log Solubility")
-            ax.set_ylabel("Number of Models")
-            ax.set_title("Histogram of the 64 Model Predictions")
+            ax.set_ylabel("Count")
             ax.legend()
             ax.grid(axis='y', alpha=0.5)
             
