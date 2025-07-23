@@ -11,6 +11,7 @@ from mace.tools import AtomicNumberTable
 from mace.tools.torch_geometric import DataLoader
 from mace.tools import torch_tools
 from scm.plams import toASE, from_rdmol
+import streamlit as st 
 
 # Set device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
