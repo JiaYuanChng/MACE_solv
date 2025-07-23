@@ -10,8 +10,7 @@ from mace.tools.torch_geometric import DataLoader
 from mace.tools import torch_tools
 import matplotlib.pyplot as plt
 
-# --- Step 1: Define the MLP Model Architecture ---
-# This class must be identical to the one used for training your ensemble.
+# Model 
 class SolubilityMLP(nn.Module):
     def __init__(self, input_size):
         super(SolubilityMLP, self).__init__()
@@ -26,12 +25,11 @@ class SolubilityMLP(nn.Module):
     def forward(self, x):
         return self.layers(x)
 
-# --- Step 2: Functions to Load Models (with Caching) ---
-# Streamlit's cache decorator prevents reloading the models on every user interaction.
+# Functions to Load Models (with Caching) 
 
 @st.cache_resource
 def load_mace_calculator():
-    """Loads the MACE model for embedding generation."""
+    """embedding generation."""
     model_path = 'models/MACE-OFF24_medium.model'
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     calculator = torch.load(model_path, map_location=device)
@@ -40,10 +38,10 @@ def load_mace_calculator():
 
 @st.cache_resource
 def load_mlp_ensemble():
-    """Loads the 64-model MLP ensemble for prediction."""
+    """ensemble model for prediction."""
     path = 'models/ensemble_64_models_small.pth'
-    input_size = 256  # Must match the training input size
-    # Load to CPU, as the deployment environment may not have a GPU
+    input_size = 256  
+    # Load to CPU
     device = torch.device('cpu')
     state_dicts = torch.load(path, map_location=device)
     
@@ -56,20 +54,20 @@ def load_mlp_ensemble():
     print(f"MLP ensemble of {len(models)} models loaded successfully.")
     return models
 
-# --- Step 3: Helper Functions for Molecule Processing ---
+# Molecule Processing 
 
 def rdkit_to_ase(mol: Chem.Mol) -> Atoms:
-    """Converts an RDKit molecule object to an ASE Atoms object."""
+    """Converts RDKit mol object to ASE Atoms object."""
     positions = mol.GetConformer().GetPositions()
     atomic_numbers = [atom.GetAtomicNum() for atom in mol.GetAtoms()]
     return Atoms(numbers=atomic_numbers, positions=positions)
 
 def get_mace_embedding(smiles: str, calculator) -> np.ndarray:
     """
-    Generates a MACE embedding for a given SMILES string.
-    Returns a single 256-dimensional feature vector (mean of node features).
+    Generates embedding for a given SMILES string.
+    Returns a single 256-dimensional feature vector.
     """
-    # 1. Convert SMILES to RDKit Mol and add hydrogens
+    # 1. Convert SMILES to RDKit Mol, add hydrogens
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         raise ValueError("Invalid SMILES string provided.")
@@ -79,7 +77,7 @@ def get_mace_embedding(smiles: str, calculator) -> np.ndarray:
     # 2. Convert to ASE Atoms
     atoms = rdkit_to_ase(mol)
 
-    # 3. Get MACE node features
+    # 3. Get MACE features
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     data_loader = DataLoader([atoms], batch_size=1, shuffle=False)
     for batch in data_loader:
@@ -90,18 +88,18 @@ def get_mace_embedding(smiles: str, calculator) -> np.ndarray:
     if node_feats is None:
         raise RuntimeError("Failed to generate MACE node features.")
 
-    # 4. Average node features to get a single graph-level embedding
+    # 4. Average node features
     graph_embedding = node_feats.mean(axis=0).detach().cpu().numpy()
     return graph_embedding
 
 
-# --- Step 4: Main Application Logic ---
+# Main Application 
 
-# Load the models once
+# Load models
 mace_calculator = load_mace_calculator()
 mlp_ensemble = load_mlp_ensemble()
 
-# --- Streamlit User Interface ---
+# Streamlit User Interface 
 st.title("Solubility Predictor")
 st.markdown(
     "Enter a SMILES string to predict its **log solubility (in mols/litre)**. "
