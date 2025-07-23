@@ -1,7 +1,8 @@
 streamlit
 torch
 numpy
+pandas
 rdkit
 ase
-mace-off
+mace-torch
 matplotlib
