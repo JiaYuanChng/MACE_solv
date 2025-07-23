@@ -1,7 +1,7 @@
 streamlit
 torch
 numpy
-rdkit-pypi
+rdkit
 ase
 mace-off
 matplotlib
