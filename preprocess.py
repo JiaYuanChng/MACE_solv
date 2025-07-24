@@ -31,7 +31,7 @@ def load_mace_calculator():
             with open(model_path, 'wb') as f:
                 f.write(r.content)
     
-    calculator = mace_off(model=model_path, device=device)
+    calculator = mace_off(model=model_path, device=str(device))
     
     return calculator
 
