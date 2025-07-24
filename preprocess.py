@@ -120,7 +120,7 @@ class SolubilityMLP(nn.Module):
         return self.layers(x)
 
 # Load ensemble model
-ensemble_states = torch.load('./models/aq_ensemble_64_models.pth')
+ensemble_states = torch.load('./models/aq_ensemble_64_models.pth', map_location=device)
 feature_scalers = joblib.load('./models/aq_ensemble_64_feature_scalers.joblib')
 target_scalers = joblib.load('./models/aq_ensemble_64_target_scalers.joblib')
 
