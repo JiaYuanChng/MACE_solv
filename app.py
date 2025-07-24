@@ -24,7 +24,7 @@ if predict_button and smiles_input:
             std_pred = np.std(all_preds)
 
             # Display results
-            col1, col2 = st.columns(2)
+            col1, col2 = st.columns([1,2])
             
             with col1:
                 st.metric(label="Predicted Log Solubility", value=f"{mean_pred:.2f}")
@@ -33,6 +33,7 @@ if predict_button and smiles_input:
             # Histogram of predictions
             with col2:
                 st.subheader("Distribution of Predictions")
+                plt.rcParams.update({'font.size': 12})
                 fig, ax = plt.subplots()
                 
                 ax.hist(all_preds, edgecolor='black', alpha=0.7)
