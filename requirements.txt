@@ -8,3 +8,4 @@ mace-torch
 matplotlib
 plams[chem,analysis,ams]
 joblib
+scikit-learn
