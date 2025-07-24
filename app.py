@@ -23,25 +23,29 @@ if predict_button and smiles_input:
             mean_pred = np.mean(all_preds)
             std_pred = np.std(all_preds)
 
-            # 5. Display numerical results
-            st.success(f"**Predicted Log Solubility:** `{mean_pred:.2f}`")
-            st.info(f"**Prediction Uncertainty:** `{std_pred:.2f}`")
+            # Display results
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.metric(label="Predicted Log Solubility", value=f"{mean_pred:.2f}")
+                st.metric(label="Prediction Uncertainty", value=f"{std_pred:.2f}")
 
             # Histogram of predictions
-            st.subheader("Distribution of Predictions")
-            fig, ax = plt.subplots()
-            
-            ax.hist(all_preds, bins=15, edgecolor='black', alpha=0.7)
-            
-            # Add a vertical line for the mean prediction
-            ax.axvline(mean_pred, color='r', linestyle='--', linewidth=2, label=f'Mean: {mean_pred:.2f}')
-            
-            ax.set_xlabel("Predicted Log Solubility")
-            ax.set_ylabel("Count")
-            ax.legend()
-            ax.grid(axis='y', alpha=0.5)
-            
-            st.pyplot(fig)
+            with col2:
+                st.subheader("Distribution of Predictions")
+                fig, ax = plt.subplots()
+                
+                ax.hist(all_preds, edgecolor='black', alpha=0.7)
+                
+                # Add a vertical line for the mean prediction
+                ax.axvline(mean_pred, color='r', linestyle='--', linewidth=2, label=f'Mean: {mean_pred:.2f}')
+                
+                ax.set_xlabel("Predicted Log Solubility")
+                ax.set_ylabel("Count")
+                ax.legend()
+                ax.grid(axis='y', alpha=0.5)
+                
+                st.pyplot(fig)
 
         except ValueError as e:
             st.error(f"Error: {e}")
