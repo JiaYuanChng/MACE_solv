@@ -33,13 +33,13 @@ if predict_button and smiles_input:
             # Histogram of predictions
             with col2:
                 st.subheader("Distribution of Predictions")
-                plt.rcParams.update({'font.size': 12})
+                plt.rcParams.update({'font.size': 14})
                 fig, ax = plt.subplots()
                 
                 ax.hist(all_preds, edgecolor='black', alpha=0.7)
                 
                 # Add a vertical line for the mean prediction
-                ax.axvline(mean_pred, color='r', linestyle='--', linewidth=2, label=f'Mean: {mean_pred:.2f}')
+                ax.axvline(mean_pred, color='r', linestyle='--', linewidth=2, label=f'Mean')
                 
                 ax.set_xlabel("Predicted Log Solubility")
                 ax.set_ylabel("Count")
