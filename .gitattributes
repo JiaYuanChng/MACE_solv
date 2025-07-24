@@ -1,1 +1,2 @@
 models/aq_ensemble_64_models.pth filter=lfs diff=lfs merge=lfs -text
+models/MACE-OFF24_medium.model filter=lfs diff=lfs merge=lfs -text
