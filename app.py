@@ -26,7 +26,7 @@ if predict_button and smiles_input:
                 if mol:
                     st.subheader("Molecule Structure")
                     img = Draw.MolToImage(mol, size=(300, 300))
-                    st.image(img, use_column_width='auto')
+                    st.image(img) #, use_column_width='auto')
                 else:
                     st.error("Invalid SMILES string. Could not generate molecule image.")
                     st.stop()
