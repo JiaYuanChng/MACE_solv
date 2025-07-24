@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 from preprocess import *
+from rdkit import Chem
 
 # --- Streamlit User Interface ---
 st.title("Solubility Prediction")
@@ -17,6 +18,20 @@ predict_button = st.button("Predict")
 if predict_button and smiles_input:
     with st.spinner("Calculating..."):
         try:
+            
+            # Display molecule
+            try:
+                mol = Chem.MolFromSmiles(smiles_input)
+                if mol:
+                    st.subheader("Molecule Structure")
+                    img = Draw.MolToImage(mol, size=(300, 300))
+                    st.image(img, use_column_width='auto')
+                else:
+                    st.error("Invalid SMILES string. Could not generate molecule image.")
+                    st.stop()
+            except Exception as e:
+                st.error(f"An unexpected error occurred: {e}")
+            
             # Get predictions from ensemble models
             all_preds = predict_with_ensemble(smiles_input)
             
