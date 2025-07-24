@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import streamlit as st
 from preprocess import *
 from rdkit import Chem
+from rdkit.Chem import Draw
 
 # --- Streamlit User Interface ---
 st.title("Solubility Prediction")
