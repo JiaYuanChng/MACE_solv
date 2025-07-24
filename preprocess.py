@@ -7,20 +7,32 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from ase import Atoms
 from mace.calculators import mace_off
-from mace.tools import AtomicNumberTable
 from mace.tools.torch_geometric import DataLoader
 from mace.tools import torch_tools
 from scm.plams import toASE, from_rdmol
 import streamlit as st 
+import os
+import requests
 
 # Set device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
-# @st.cache_resource
+@st.cache_resource
 def load_mace_calculator():
-    model_path = './models/MACE-OFF24_medium.model'
+    model_url = "https://github.com/ACEsuit/mace-off/raw/main/mace_off24/MACE-OFF24_medium.model"
+    model_dir = './models'
+    model_path = os.path.join(model_dir, 'MACE-OFF24_medium.model')
+    
+    if not os.path.exists(model_path):
+        with st.spinner("Downloading MACE model..."):
+            r = requests.get(model_url, allow_redirects=True)
+            r.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
+            with open(model_path, 'wb') as f:
+                f.write(r.content)
+    
     calculator = mace_off(model=model_path, device=device)
+    
     return calculator
 
 # Load MACE calculator
